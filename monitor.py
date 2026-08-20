@@ -22,10 +22,15 @@ from datetime import datetime, timedelta, timezone
 
 KST = timezone(timedelta(hours=9))
 
-SCHEDULE_API = os.environ.get("SCHEDULE_API", "").strip()
-SITE_LABEL = os.environ.get("SITE_LABEL", "극장").strip()
-BOOKING_URL = os.environ.get("BOOKING_URL", "").strip()
-MOVIE_KEYWORD = os.environ.get("MOVIE_KEYWORD", "").strip()
+def _env(name, default=""):
+    # 시크릿 입력 경로에 따라 BOM(U+FEFF)이 섞일 수 있어 함께 제거
+    return os.environ.get(name, default).strip("﻿ \t\r\n")
+
+
+SCHEDULE_API = _env("SCHEDULE_API")
+SITE_LABEL = _env("SITE_LABEL", "극장")
+BOOKING_URL = _env("BOOKING_URL")
+MOVIE_KEYWORD = _env("MOVIE_KEYWORD")
 # 감시 대상 상영관 등급 코드 접두사
 TARGET_GRADES = ("03",)
 # 예매 오픈 범위(~2주)보다 넓게 잡아야 '감시창에 새로 들어온 날짜'를 오픈으로 오인하지 않는다.
@@ -144,8 +149,8 @@ def build_alert(prev_keys, curr):
 
 
 def send_ntfy(text):
-    topic = os.environ.get("NTFY_TOPIC", "").strip()
-    server = os.environ.get("NTFY_SERVER", "https://ntfy.sh").strip().rstrip("/")
+    topic = _env("NTFY_TOPIC")
+    server = _env("NTFY_SERVER", "https://ntfy.sh").rstrip("/")
     if not topic:
         print("[테스트 모드] NTFY_TOPIC 미설정 — 전송 생략. 보낼 내용:")
         print(text)
