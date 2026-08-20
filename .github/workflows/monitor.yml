@@ -43,3 +43,19 @@ jobs:
             git pull --rebase origin ${GITHUB_REF_NAME}
             git push
           fi
+
+      - name: Notify failure
+        if: failure()
+        env:
+          NTFY_TOPIC: ${{ secrets.NTFY_TOPIC }}
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          # 직전 실행도 실패였으면 이미 알렸으므로 생략 (연속 장애 시 5분마다 스팸 방지)
+          prev=$(gh run list --workflow monitor.yml --limit 2 --json conclusion --jq '.[1].conclusion')
+          if [ "$prev" = "failure" ]; then
+            echo "already notified (previous run also failed)"
+            exit 0
+          fi
+          curl -s -X POST https://ntfy.sh \
+            -H "Content-Type: application/json" \
+            -d "{\"topic\":\"$NTFY_TOPIC\",\"title\":\"⚠️ 감시 실패\",\"message\":\"스케줄 감시가 실패했습니다. Actions 탭을 확인하세요.\",\"tags\":[\"warning\"],\"priority\":4,\"click\":\"https://github.com/$GITHUB_REPOSITORY/actions\"}"
