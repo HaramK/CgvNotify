@@ -71,8 +71,9 @@ def fetch_showtimes():
             data = http_get_json(SCHEDULE_API.format(ymd=ymd))
             ok += 1
         except Exception as e:
-            # 공개 로그에 URL이 남지 않도록 예외 타입만 기록
-            errors.append(f"{ymd}: {type(e).__name__}")
+            # 공개 로그에 URL이 남지 않도록 예외 타입과 reason만 기록
+            reason = getattr(e, "reason", None) or getattr(e, "code", "")
+            errors.append(f"{ymd}: {type(e).__name__}: {reason}")
             continue
         for row in (data.get("data") or []):
             if not is_target_screen(row):
